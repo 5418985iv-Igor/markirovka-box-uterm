@@ -1,0 +1,197 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Профиль оператора склада, авторизованного в системе сборки.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth UID оператора",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "login": {
+          "type": "string",
+          "description": "Логин оператора",
+          "minLength": 2,
+          "maxLength": 64
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Отображаемое имя оператора",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Серверное время создания профиля"
+        }
+      },
+      "required": ["uid", "login", "displayName", "createdAt"]
+    },
+    "AssemblyBox": {
+      "title": "AssemblyBox",
+      "description": "Транспортная коробка для сборки маркированных товаров.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Уникальный идентификатор документа коробки",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "boxCode": {
+          "type": "string",
+          "description": "Исходный считанный QR-код коробки",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "boxNumber": {
+          "type": "string",
+          "description": "Номер коробки для отображения в реестре",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "operatorId": {
+          "type": "string",
+          "description": "UID оператора, выполняющего сборку",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "operatorLogin": {
+          "type": "string",
+          "description": "Логин оператора для реестра",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "status": {
+          "type": "string",
+          "enum": ["assembling", "completed"],
+          "description": "Статус сборки коробки"
+        },
+        "itemsCount": {
+          "type": "integer",
+          "description": "Количество отсканированных товаров в коробке"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Серверное время начала сборки"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Серверное время последнего обновления"
+        },
+        "completedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Серверное время завершения сборки"
+        }
+      },
+      "required": [
+        "id",
+        "boxCode",
+        "boxNumber",
+        "operatorId",
+        "operatorLogin",
+        "status",
+        "itemsCount",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "ScannedItem": {
+      "title": "ScannedItem",
+      "description": "Штучный товар с кодом маркировки Data Matrix Честный ЗНАК внутри коробки.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Детерминированный идентификатор кода (SHA-256 хэш)",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "boxId": {
+          "type": "string",
+          "description": "ID родительской коробки",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "operatorId": {
+          "type": "string",
+          "description": "UID оператора, отсканировавшего товар",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "rawCode": {
+          "type": "string",
+          "description": "Полный считанный код Data Matrix или QR",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "gtin": {
+          "type": "string",
+          "description": "Распознанный 14-значный GTIN товара (AI 01)",
+          "minLength": 0,
+          "maxLength": 32
+        },
+        "serial": {
+          "type": "string",
+          "description": "Распознанный серийный номер (AI 21)",
+          "minLength": 0,
+          "maxLength": 128
+        },
+        "cryptoTail": {
+          "type": "string",
+          "description": "Ключ проверки / криптохвост (AI 91/92/93)",
+          "minLength": 0,
+          "maxLength": 128
+        },
+        "format": {
+          "type": "string",
+          "enum": ["DATA_MATRIX", "QR_CODE", "MANUAL"],
+          "description": "Формат считывания кода"
+        },
+        "scannedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Серверное время сканирования товара"
+        }
+      },
+      "required": [
+        "id",
+        "boxId",
+        "operatorId",
+        "rawCode",
+        "gtin",
+        "serial",
+        "cryptoTail",
+        "format",
+        "scannedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Профили операторов"
+    },
+    "/boxes/{boxId}": {
+      "schema": { "$ref": "#/entities/AssemblyBox" },
+      "description": "Коробки сборки и реестр завершённых коробок"
+    },
+    "/boxes/{boxId}/items/{itemId}": {
+      "schema": { "$ref": "#/entities/ScannedItem" },
+      "description": "Штучные коды Data Matrix Честный ЗНАК, зафиксированные в коробке"
+    }
+  }
+}

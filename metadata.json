@@ -1,0 +1,6 @@
+{
+  "name": "Ю-Терм. Маркировка",
+  "description": "Мобильное веб-приложение для сборки коробок и учёта кодов маркировки Data Matrix Честный ЗНАК с формированием реестра.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
