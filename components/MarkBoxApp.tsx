@@ -36,6 +36,7 @@ type ActiveTab = 'assembly' | 'registry' | 'profile';
 
 function MarkBoxShell() {
   const [authReady, setAuthReady] = useState(false);
+  const [authTimedOut, setAuthTimedOut] = useState(false);
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
 
@@ -49,7 +50,17 @@ function MarkBoxShell() {
 
   useEffect(() => {
     testConnection();
+    let settled = false;
+    const timeoutId = window.setTimeout(() => {
+      if (!settled) {
+        setAuthTimedOut(true);
+      }
+    }, 8000);
+
     const unsub = onAuthStateChanged(auth, (firebaseUser) => {
+      settled = true;
+      window.clearTimeout(timeoutId);
+      setAuthTimedOut(false);
       setUser(firebaseUser);
       setAuthReady(true);
       if (!firebaseUser) {
@@ -60,7 +71,10 @@ function MarkBoxShell() {
         setSelectedRegistryBoxId(null);
       }
     });
-    return () => unsub();
+    return () => {
+      window.clearTimeout(timeoutId);
+      unsub();
+    };
   }, []);
 
   // Load user profile & operator boxes when authenticated
@@ -139,6 +153,40 @@ function MarkBoxShell() {
   }, [user, activeBoxId]);
 
   if (!authReady) {
+    if (authTimedOut) {
+      return (
+        <div className="min-h-screen bg-[#F6F7F9] flex items-center justify-center p-4">
+          <div className="w-full max-w-sm bg-white border border-slate-200 rounded-2xl p-5 shadow-xs text-center space-y-3">
+            <p className="text-sm font-semibold text-slate-900">
+              Долгое подключение к серверу авторизации
+            </p>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Мобильный оператор может задерживать соединение. Попробуйте обновить страницу или перейти ко входу.
+            </p>
+            <div className="flex flex-col gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => window.location.reload()}
+                className="w-full min-h-[44px] px-4 py-2 bg-blue-700 hover:bg-blue-800 text-white text-sm font-semibold rounded-xl transition-colors"
+              >
+                Повторить
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setAuthTimedOut(false);
+                  setAuthReady(true);
+                }}
+                className="w-full min-h-[44px] px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-sm font-medium rounded-xl transition-colors"
+              >
+                Открыть экран входа
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="min-h-screen bg-[#F6F7F9] flex items-center justify-center">
         <div className="flex items-center gap-2.5 text-sm font-medium text-slate-600">

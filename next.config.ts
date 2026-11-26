@@ -11,6 +11,19 @@ export default function nextConfig(phase: string): NextConfig {
     typescript: {
       ignoreBuildErrors: false,
     },
+    async headers() {
+      return [
+        {
+          source: '/:path*',
+          headers: [
+            {
+              key: 'Alt-Svc',
+              value: 'clear',
+            },
+          ],
+        },
+      ];
+    },
     // Allow access to remote image placeholder.
     images: {
       remotePatterns: [
